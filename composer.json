@@ -1,11 +1,11 @@
 {
 	"description": "The CodeIgniter framework",
-	"name": "pocketarc/codeigniter",
+	"name": "jpdagostino/betterci3",
 	"type": "project",
-	"homepage": "https://github.com/pocketarc/codeigniter",
+	"homepage": "https://github.com/jpdagostino/betterci3",
 	"license": "MIT",
 	"support": {
-		"source": "https://github.com/pocketarc/codeigniter"
+		"source": "https://github.com/jpdagostino/betterci3"
 	},
 	"require": {
 		"php": ">=5.4.8"
