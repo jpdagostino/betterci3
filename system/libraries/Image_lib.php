@@ -85,14 +85,6 @@ class CI_Image_lib {
 	 */
 	public $new_image		= '';
 
-
-	/**
-	 * Path to destination image
-	 *
-	 * @var string
-	 */
-	public $dest_image		= '';
-
 	/**
 	 * Image width
 	 *
@@ -574,7 +566,7 @@ class CI_Image_lib {
 		else
 		{
 			// Is there a file name?
-			if ( ! preg_match('#\.(jpg|jpeg|gif|png|webp)$#i', $this->new_image))
+			if ( ! preg_match('#\.(jpe?g|gif|png|webp|avif)$#i', $this->new_image))
 			{
 				$this->dest_image  = $this->source_image;
 				$this->dest_folder = $this->new_image;
@@ -822,7 +814,8 @@ class CI_Image_lib {
 
 		$dst_img = $create($this->width, $this->height);
 
-		if ($this->image_type === 3) // png we can actually preserve transparency
+		// We can preserve transparency for PNG, WEBP, AVIF images
+		if (in_array($this->image_type, [IMAGETYPE_PNG, IMAGETYPE_WEBP, IMAGETYPE_AVIF], true))
 		{
 			imagealphablending($dst_img, FALSE);
 			imagesavealpha($dst_img, TRUE);
@@ -943,22 +936,26 @@ class CI_Image_lib {
 		// Build the resizing command
 		switch ($this->image_type)
 		{
-			case 1 :
+			case IMAGETYPE_GIF :
 				$cmd_in		= 'giftopnm';
 				$cmd_out	= 'ppmtogif';
 				break;
-			case 2 :
+			case IMAGETYPE_JPEG :
 				$cmd_in		= 'jpegtopnm';
 				$cmd_out	= 'ppmtojpeg';
 				break;
-			case 3 :
+			case IMAGETYPE_PNG :
 				$cmd_in		= 'pngtopnm';
 				$cmd_out	= 'ppmtopng';
 				break;
-			case 18 :
+			/*case IMAGETYPE_WEBP :
 				$cmd_in		= 'webptopnm';
 				$cmd_out	= 'ppmtowebp';
 				break;
+			case IMAGETYPE_AVIF :
+				$cmd_in		= 'webptopnm';
+				$cmd_out	= 'ppmtowebp';
+				break;*/
 		}
 
 		if ($action === 'crop')
@@ -1242,8 +1239,8 @@ class CI_Image_lib {
 			imagecopymerge($src_img, $wm_img, $x_axis, $y_axis, 0, 0, $wm_width, $wm_height, $this->wm_opacity);
 		}
 
-		// We can preserve transparency for PNG images
-		if ($this->image_type === 3)
+		// We can preserve transparency for PNG, WEBP, AVIF images
+		if (in_array($this->image_type, [IMAGETYPE_PNG, IMAGETYPE_WEBP, IMAGETYPE_AVIF], true))
 		{
 			imagealphablending($src_img, FALSE);
 			imagesavealpha($src_img, TRUE);
@@ -1413,8 +1410,8 @@ class CI_Image_lib {
 			imagestring($src_img, $this->wm_font_size, $x_axis, $y_axis, $this->wm_text, $txt_color);
 		}
 
-		// We can preserve transparency for PNG images
-		if ($this->image_type === 3)
+		// We can preserve transparency for PNG, WEBP, AVIF images
+		if (in_array($this->image_type, [IMAGETYPE_PNG, IMAGETYPE_WEBP, IMAGETYPE_AVIF], true))
 		{
 			imagealphablending($src_img, FALSE);
 			imagesavealpha($src_img, TRUE);
@@ -1461,7 +1458,7 @@ class CI_Image_lib {
 
 		switch ($image_type)
 		{
-			case 1:
+			case IMAGETYPE_GIF:
 				if ( ! function_exists('imagecreatefromgif'))
 				{
 					$this->set_error(array('imglib_unsupported_imagecreate', 'imglib_gif_not_supported'));
@@ -1469,7 +1466,7 @@ class CI_Image_lib {
 				}
 
 				return imagecreatefromgif($path);
-			case 2:
+			case IMAGETYPE_JPEG:
 				if ( ! function_exists('imagecreatefromjpeg'))
 				{
 					$this->set_error(array('imglib_unsupported_imagecreate', 'imglib_jpg_not_supported'));
@@ -1477,7 +1474,7 @@ class CI_Image_lib {
 				}
 
 				return imagecreatefromjpeg($path);
-			case 3:
+			case IMAGETYPE_PNG:
 				if ( ! function_exists('imagecreatefrompng'))
 				{
 					$this->set_error(array('imglib_unsupported_imagecreate', 'imglib_png_not_supported'));
@@ -1485,7 +1482,7 @@ class CI_Image_lib {
 				}
 
 				return imagecreatefrompng($path);
-			case 18:
+			case IMAGETYPE_WEBP:
 				if ( ! function_exists('imagecreatefromwebp'))
 				{
 					$this->set_error(array('imglib_unsupported_imagecreate', 'imglib_webp_not_supported'));
@@ -1493,6 +1490,14 @@ class CI_Image_lib {
 				}
 
 				return imagecreatefromwebp($path);
+			case IMAGETYPE_AVIF:
+				if ( ! function_exists('imagecreatefromavif'))
+				{
+					$this->set_error(array('imglib_unsupported_imagecreate', 'imglib_avif_not_supported'));
+					return FALSE;
+				}
+
+				return imagecreatefromavif($path);
 			default:
 				$this->set_error(array('imglib_unsupported_imagecreate'));
 				return FALSE;
@@ -1514,7 +1519,7 @@ class CI_Image_lib {
 	{
 		switch ($this->image_type)
 		{
-			case 1:
+			case IMAGETYPE_GIF:
 				if ( ! function_exists('imagegif'))
 				{
 					$this->set_error(array('imglib_unsupported_imagecreate', 'imglib_gif_not_supported'));
@@ -1527,7 +1532,7 @@ class CI_Image_lib {
 					return FALSE;
 				}
 			break;
-			case 2:
+			case IMAGETYPE_JPEG :
 				if ( ! function_exists('imagejpeg'))
 				{
 					$this->set_error(array('imglib_unsupported_imagecreate', 'imglib_jpg_not_supported'));
@@ -1540,7 +1545,7 @@ class CI_Image_lib {
 					return FALSE;
 				}
 			break;
-			case 3:
+			case IMAGETYPE_PNG:
 				if ( ! function_exists('imagepng'))
 				{
 					$this->set_error(array('imglib_unsupported_imagecreate', 'imglib_png_not_supported'));
@@ -1553,7 +1558,7 @@ class CI_Image_lib {
 					return FALSE;
 				}
 			break;
-			case 18:
+			case IMAGETYPE_WEBP:
 				if ( ! function_exists('imagewebp'))
 				{
 					$this->set_error(array('imglib_unsupported_imagecreate', 'imglib_webp_not_supported'));
@@ -1561,6 +1566,19 @@ class CI_Image_lib {
 				}
 
 				if ( ! @imagewebp($resource, $this->full_dst_path))
+				{
+					$this->set_error('imglib_save_failed');
+					return FALSE;
+				}
+			break;
+			case IMAGETYPE_AVIF:
+				if ( ! function_exists('imageavif'))
+				{
+					$this->set_error(array('imglib_unsupported_imagecreate', 'imglib_avif_not_supported'));
+					return FALSE;
+				}
+
+				if ( ! @imageavif($resource, $this->full_dst_path))
 				{
 					$this->set_error('imglib_save_failed');
 					return FALSE;
@@ -1601,13 +1619,15 @@ class CI_Image_lib {
 
 		switch ($this->image_type)
 		{
-			case 1	:	imagegif($resource);
+			case IMAGETYPE_GIF	:	imagegif($resource);
 				break;
-			case 2	:	imagejpeg($resource, NULL, $this->quality);
+			case IMAGETYPE_JPEG	:	imagejpeg($resource, NULL, $this->quality);
 				break;
-			case 3	:	imagepng($resource);
+			case IMAGETYPE_PNG	:	imagepng($resource);
 				break;
-			case 18	:	imagewebp($resource);
+			case IMAGETYPE_WEBP	:	imagewebp($resource);
+				break;
+			case IMAGETYPE_AVIF	:	imageavif($resource);
 				break;
 			default:	echo 'Unable to display the image';
 				break;
@@ -1703,7 +1723,7 @@ class CI_Image_lib {
 			return FALSE;
 		}
 
-		$types = array(1 => 'gif', 2 => 'jpeg', 3 => 'png');
+		$types = array(IMAGETYPE_GIF => 'gif', IMAGETYPE_JPEG => 'jpeg', IMAGETYPE_PNG => 'png', IMAGETYPE_WEBP => 'webp', IMAGETYPE_AVIF => 'avif');
 		$mime = isset($types[$vals[2]]) ? 'image/'.$types[$vals[2]] : 'image/jpg';
 
 		if ($return === TRUE)
